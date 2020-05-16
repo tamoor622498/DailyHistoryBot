@@ -15,7 +15,9 @@ t = wikipedia.page(s)
 x = t.section("Events")
 f = x.splitlines()
 
-api.update_status("Git Test.")
+print("TTTTTTTTTT")
+
+#api.update_status("Git Test.")
 
 # for x in range(0,4):
 #     loc = random.randrange(0,len(f))
