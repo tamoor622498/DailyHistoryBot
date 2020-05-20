@@ -5,19 +5,23 @@ import tweepy
 import random
 import authentication #Holds twitter log in data.
 
-api = authentication.authFunc() #Returns the API object
+api = authentication.authFunc()  # Returns the API object
 
-# Create a tweet
-mydate = datetime.datetime.now()
-s = mydate.strftime("%B")
-s = s + " " + str(mydate.day)
-t = wikipedia.page(s)
-x = t.section("Events")
-f = x.splitlines()
+def main():
 
-print("TTTTTTTTTT")
+    # Create a tweet
+    mydate = datetime.datetime.now()
+    month = mydate.strftime("%B")
+    monthAndDay = month + " " + str(mydate.day)
+    wikiPage = wikipedia.page(monthAndDay)
+    events = wikiPage.section("Events")
+    events = events.splitlines()
+    print(events[0])
 
-#api.update_status("Git Test.")
+if __name__ == '__main__':
+    main()
+
+#api.update_status("Hello World!")
 
 # for x in range(0,4):
 #     loc = random.randrange(0,len(f))
