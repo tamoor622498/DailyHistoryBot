@@ -1,31 +1,47 @@
 import wikipedia
-import datetime
+from datetime import datetime
 import time
 import tweepy
 import random
-import authentication #Holds twitter log in data.
 
+import authentication  # Holds twitter log in data.
+
+# global variables
 api = authentication.authFunc()  # Returns the API object
 
-def main():
 
-    # Create a tweet
-    mydate = datetime.datetime.now()
-    month = mydate.strftime("%B")
-    monthAndDay = month + " " + str(mydate.day)
-    wikiPage = wikipedia.page(monthAndDay)
-    events = wikiPage.section("Events")
+def getEvents(day):  # Gets the array of events for given day
+    events = wikipedia.page(day)
+    events = events.section("Events")
     events = events.splitlines()
-    print(events[0])
+    return events
+
+
+def daySetUp():
+    global mydate
+    global month
+    global currentDay
+    global monthAndDay
+
+    mydate = datetime.now()
+    month = mydate.strftime("%B")
+    currentDay = mydate.day
+    monthAndDay = month + " " + str(currentDay)
+
+
+def main():
+    daySetUp()
+
+    events = getEvents(monthAndDay)
+    while (currentDay == mydate.day):
+        now = datetime.now().time()
+        loc = random.randrange(0, len(events))
+        out = monthAndDay + " " + events[loc]
+        events.pop(loc)
+        print(out, "tweeted at ", now)
+        api.update_status(out)
+        time.sleep(3600)
+
 
 if __name__ == '__main__':
     main()
-
-#api.update_status("Hello World!")
-
-# for x in range(0,4):
-#     loc = random.randrange(0,len(f))
-#     out = "Today in " + f[loc]
-#     f.pop(loc)
-#     #api.update_status(out)
-#     time.sleep(60)
