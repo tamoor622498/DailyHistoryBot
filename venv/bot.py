@@ -10,9 +10,9 @@ api = authentication.authFunc()  # Returns the API object
 
 
 def getEvents(day):  # Gets the array of events for given day
-    events = wikipedia.page(day)#Wiki page for current day
-    events = events.section("Events")#String of the entire Events section
-    events = events.splitlines()#Turns string in to list of event strings
+    events = wikipedia.page(day)  # Wiki page for current day
+    events = events.section("Events")  # String of the entire Events section
+    events = events.splitlines()  # Turns string in to list of event strings
     return events
 
 
@@ -22,36 +22,42 @@ def daySetUp():
     global currentDay
     global monthAndDay
 
-    mydate = datetime.now()#current date
-    month = mydate.strftime("%B")#String of month name
-    currentDay = mydate.day#Day int
+    mydate = datetime.now()  # current date
+    month = mydate.strftime("%B")  # String of month name
+    currentDay = mydate.day  # Day int
     monthAndDay = month + " " + str(currentDay)
-    
+
+
 def eventsPrinter():
-    while (currentDay == mydate.day):#Goes till day changes (RPi reboots at midnight to restart code)
-        if (len(events) < 1):#All string values printed
-            break
-        now = datetime.now().time()#Current time
-        loc = random.randrange(0, len(events))#Random part in list
-        out = monthAndDay + " " + events[loc] + "#TodayInHistory"#Adds date in front of event
-        events.pop(loc)#Event removes from list
+    events = getEvents(monthAndDay)
+    while (True):  # Goes till day changes (RPi reboots at midnight to restart code)
+        now = datetime.now().time()  # Current time
+        loc = random.randrange(0, len(events))  # Random part in list
+        out = monthAndDay + " " + events[loc] + " #TodayInHistory"  # Adds date in front of event
+        events.pop(loc)  # Event removes from list
         try:
-            api.update_status(out)
+            #api.update_status(out)
             print(out, "tweeted at ", now)
-            time.sleep(3600)
+            #time.sleep(3600)
         except tweepy.error.TweepError as e:
-            if (e.api_code == 187):#If tweet repeated
+            if (e.api_code == 187):  # If tweet repeated
                 print("Repeated Tweet: ", out)
             else:
-                print("Exception: ", e.reason)#Anyother reason
+                print("Exception: ", e.reason)  # Anyother reason
+
+        if (len(events) < 1):  # All string values printed
+            while (currentDay == mydate.day):
+                time.sleep(10)
+
+        if (currentDay != mydate.day):
+            daySetUp()
+            events = getEvents(monthAndDay)
 
 
 def main():
     daySetUp()
     global events
-    events = getEvents(monthAndDay)
     eventsPrinter()
-
 
 
 if __name__ == '__main__':
