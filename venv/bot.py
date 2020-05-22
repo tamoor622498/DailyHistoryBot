@@ -26,18 +26,14 @@ def daySetUp():
     month = mydate.strftime("%B")#String of month name
     currentDay = mydate.day#Day int
     monthAndDay = month + " " + str(currentDay)
-
-
-def main():
-    daySetUp()
-    events = getEvents(monthAndDay)
-
+    
+def eventsPrinter():
     while (currentDay == mydate.day):#Goes till day changes (RPi reboots at midnight to restart code)
         if (len(events) < 1):#All string values printed
             break
         now = datetime.now().time()#Current time
         loc = random.randrange(0, len(events))#Random part in list
-        out = monthAndDay + " " + events[loc]#Adds date in front of event
+        out = monthAndDay + " " + events[loc] + "#TodayInHistory"#Adds date in front of event
         events.pop(loc)#Event removes from list
         try:
             api.update_status(out)
@@ -48,6 +44,14 @@ def main():
                 print("Repeated Tweet: ", out)
             else:
                 print("Exception: ", e.reason)#Anyother reason
+
+
+def main():
+    daySetUp()
+    global events
+    events = getEvents(monthAndDay)
+    eventsPrinter()
+
 
 
 if __name__ == '__main__':
