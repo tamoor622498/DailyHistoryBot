@@ -83,7 +83,8 @@ class ImageDownload:
         return imageLoc
 
     def deleteImage(self, imageLoc):
-        os.remove(imageLoc)
+        if imageLoc:
+            os.remove(imageLoc)
         # Deletes the image through exact file path.
         print("DELETING: " + imageLoc)
 

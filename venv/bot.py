@@ -6,9 +6,12 @@ import random
 from ImageDownload import ImageDownload  # Downloads images from twitter page.
 
 import authentication
+
 # Holds twitter log in data.
 
 api = authentication.authFunc()
+
+
 # Returns the API object
 
 class Events:
@@ -44,8 +47,11 @@ class Events:
 
             try:
                 if imgPath:
-                    api.update_with_media(imgPath, output)
-                    # Image found
+                    try:
+                        api.update_with_media(imgPath, output)
+                        # Image found
+                    except:
+                        api.update_status(output)
                 else:
                     api.update_status(output)
                     # No image path
