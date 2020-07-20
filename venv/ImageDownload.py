@@ -3,7 +3,6 @@ import wikipedia  # Finds the images
 import requests  # to sent GET requests
 from bs4 import BeautifulSoup  # to parse HTML
 import re  # regex expressions
-
 import random
 
 from datetime import datetime
@@ -13,11 +12,11 @@ class ImageDownload:
     def __init__(self, month, day):
         self.month = month
         self.day = day
+        self.saveFolder = "MEDIA"
 
     def download(self, index):
-        saveFolder = "MEDIA"
-        if not os.path.exists(saveFolder):
-            os.mkdir(saveFolder)
+        if not os.path.exists(self.saveFolder):
+            os.mkdir(self.saveFolder)
         # Creates folder to store image.
 
         pageURl = "https://en.wikipedia.org/wiki/" + self.month + "_" + str(self.day)
@@ -73,41 +72,43 @@ class ImageDownload:
         # If no images are found on the page
 
         image = requests.get(imagePage.images[0])
-        fileExtension = imagePage.images[0][len(imagePage.images[0])-4:len(imagePage.images[0])]
+        fileExtension = imagePage.images[0][len(imagePage.images[0]) - 4:len(imagePage.images[0])]
+        # Grabs the image file link and the file extension.
 
-        imageName = saveFolder + '/' + "img" + str(random.randrange(0, 10000)) + fileExtension
-        with open(imageName, 'wb') as file:
+        self.imageName = "img" + str(random.randrange(0, 10000)) + fileExtension
+        # The file name
+        imageLoc = self.saveFolder + '/' + self.imageName
+        # Path to file
+        with open(imageLoc, 'wb') as file:
             file.write(image.content)
+        # The file downloaded and saved
 
-        return True
+        return self.imageName
 
-        # if not re.match(r'^([\s\d]+)$', imageTitles[0]):
-        #     pageID = imageLinks[0].replace('/wiki/', '')
-        #     # imagePage = wikipedia.page(pageID)
-        # else:
-        #     pageID = imageLinks[1].replace('/wiki/', '')
-        #     #imagePage = wikipedia.page(pageID)
-        # # Filters out the page for years, gets part of the event.
-        #
-        # print(pageID)
-        # print(wikipedia.page(pageID,auto_suggest=True, redirect=True))
-        # print(wikipedia.page(wikipedia.search(pageID)[0]).images)
-
-    def deleteImage(self):
-        pass
+    def deleteImage(self, imageName):
+        os.remove(self.saveFolder + '/' + imageName)
+        # Deletes the image through exact file path.
+        print("DELETING: " + self.saveFolder + '/' + imageName)
 
 
-def main():
-    currDate = datetime.now()
-    month = currDate.strftime("%B")
-    currDay = currDate.day
-
-    t = ImageDownload(month, currDay+1)
-    # t.download(30)
-    for i in range(20):
-        print("TIMES: " + str(i))
-        t.download(i)
-
-
-if __name__ == '__main__':
-    main()
+# def main():
+#     currDate = datetime.now()
+#     month = currDate.strftime("%B")
+#     currDay = currDate.day
+#
+#     t = ImageDownload(month, currDay)
+#     # t.download(30)
+#     l = []
+#     for i in range(40):
+#         print("TIMES: " + str(i))
+#         l.append(t.download(i))
+#
+#     time.sleep(10)
+#
+#     for k in range(len(l)):
+#         if l[k]:
+#             t.deleteImage(l[k])
+#
+#
+# if __name__ == '__main__':
+#     main()
