@@ -1,11 +1,8 @@
-import os  # Dowwloads and deletes the file.
+import os  # Downloads and deletes the file.
 import wikipedia  # Finds the images
 import requests  # to sent GET requests
 from bs4 import BeautifulSoup  # to parse HTML
 import re  # regex expressions
-import random
-
-from datetime import datetime
 
 
 class ImageDownload:
@@ -75,7 +72,7 @@ class ImageDownload:
         fileExtension = imagePage.images[0][len(imagePage.images[0]) - 4:len(imagePage.images[0])]
         # Grabs the image file link and the file extension.
 
-        self.imageName = "img" + str(random.randrange(0, 10000)) + fileExtension
+        self.imageName = "img" + fileExtension
         # The file name
         imageLoc = self.saveFolder + '/' + self.imageName
         # Path to file
@@ -83,13 +80,12 @@ class ImageDownload:
             file.write(image.content)
         # The file downloaded and saved
 
-        return self.imageName
+        return imageLoc
 
-    def deleteImage(self, imageName):
-        os.remove(self.saveFolder + '/' + imageName)
+    def deleteImage(self, imageLoc):
+        os.remove(imageLoc)
         # Deletes the image through exact file path.
-        print("DELETING: " + self.saveFolder + '/' + imageName)
-
+        print("DELETING: " + imageLoc)
 
 # def main():
 #     currDate = datetime.now()
@@ -97,17 +93,18 @@ class ImageDownload:
 #     currDay = currDate.day
 #
 #     t = ImageDownload(month, currDay)
-#     # t.download(30)
-#     l = []
-#     for i in range(40):
-#         print("TIMES: " + str(i))
-#         l.append(t.download(i))
-#
-#     time.sleep(10)
-#
-#     for k in range(len(l)):
-#         if l[k]:
-#             t.deleteImage(l[k])
+#     x = t.download(30)
+#     t.deleteImage(x)
+#     # l = []
+#     # for i in range(40):
+#     #     print("TIMES: " + str(i))
+#     #     l.append(t.download(i))
+#     #
+#     # time.sleep(10)
+#     #
+#     # for k in range(len(l)):
+#     #     if l[k]:
+#     #         t.deleteImage(l[k])
 #
 #
 # if __name__ == '__main__':
