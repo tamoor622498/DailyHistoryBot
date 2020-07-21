@@ -3,6 +3,7 @@ import wikipedia  # Finds the images
 import requests  # to sent GET requests
 from bs4 import BeautifulSoup  # to parse HTML
 import re  # regex expressions
+import random
 
 
 class ImageDownload:
@@ -45,9 +46,9 @@ class ImageDownload:
             imageLinks.pop(0)
             imageTitles.pop(0)
         # Removes the page for the whole year
-        # .
 
-        searchResults = wikipedia.search(imageLinks[0].replace('/wiki/', ''))
+        # searchResults = wikipedia.search(imageLinks[0].replace('/wiki/', ''))
+        searchResults = imageLinks
         # Found results for wikiPage query
 
         if len(searchResults) == 0:
@@ -58,19 +59,36 @@ class ImageDownload:
         imgIndex = 0
         while imgIndex < len(searchResults) and imagePage == None:
             try:
-                imagePage = wikipedia.page(searchResults[imgIndex])
+                imagePage = wikipedia.page(searchResults[imgIndex].replace('/wiki/', ''))
             except:
                 if imagePage == None:
                     imgIndex += 1
         # Iterates through the list until it finds a viable page to search for an image.
 
-        if len(imagePage.images) == 0:
+        if len(imagePage.images) == 0 or imagePage == False:
             return False
         # If no images are found on the page
 
-        image = requests.get(imagePage.images[0])
-        fileExtension = imagePage.images[0][len(imagePage.images[0]) - 4:len(imagePage.images[0])]
-        # Grabs the image file link and the file extension.
+        unfilteredMedia = imagePage.images
+        # All media on the page.
+
+        acceptedFormats = ['JPG', 'PNG', 'GIF', 'WEBP', 'jpg', 'png', 'gif', 'webp']
+        # Image formats accepted by twitter
+
+        posImages = []
+        for i in range(len(unfilteredMedia)):
+            if unfilteredMedia[i][len(unfilteredMedia[i]) - 3:len(unfilteredMedia[i])] in acceptedFormats:
+                posImages.append(unfilteredMedia[i])
+        # Filters out invalid file extensions
+
+        if len(posImages) == 0:
+            return False
+        # If all images were invalid
+
+        requestedImage = posImages[random.randrange(0, len(posImages))]
+        image = requests.get(requestedImage)
+        fileExtension = requestedImage[len(requestedImage) - 4:len(requestedImage)]
+        # Grabs a random image file link and the file extension.
 
         self.imageName = "img" + fileExtension
         # The file name
@@ -84,9 +102,10 @@ class ImageDownload:
 
     def deleteImage(self, imageLoc):
         if imageLoc:
+            print("DELETING: " + imageLoc)
             os.remove(imageLoc)
         # Deletes the image through exact file path.
-        print("DELETING: " + imageLoc)
+
 
 # def main():
 #     currDate = datetime.now()

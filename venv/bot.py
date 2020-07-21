@@ -49,11 +49,14 @@ class Events:
                 if imgPath:
                     try:
                         api.update_with_media(imgPath, output)
+                        # print(output)
                         # Image found
                     except:
                         api.update_status(output)
+                        # print(output)
                 else:
                     api.update_status(output)
+                    # print(output)
                     # No image path
                 downloader.deleteImage(imgPath)
                 # Downloaded image is deleted
