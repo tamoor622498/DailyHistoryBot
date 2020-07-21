@@ -4,6 +4,7 @@ import requests  # to sent GET requests
 from bs4 import BeautifulSoup  # to parse HTML
 import re  # regex expressions
 import random
+from datetime import datetime
 
 
 class ImageDownload:
@@ -47,50 +48,36 @@ class ImageDownload:
             imageTitles.pop(0)
         # Removes the page for the whole year
 
-        # searchResults = wikipedia.search(imageLinks[0].replace('/wiki/', ''))
-        searchResults = imageLinks
+        # posImagePages = wikipedia.search(imageLinks[0].replace('/wiki/', ''))
+        posImagePages = imageLinks
         # Found results for wikiPage query
 
-        if len(searchResults) == 0:
+        if len(posImagePages) == 0:
             return False
         # if no search results come up.
 
-        imagePage = None
-        imgIndex = 0
-        while imgIndex < len(searchResults) and imagePage == None:
-            try:
-                imagePage = wikipedia.page(searchResults[imgIndex].replace('/wiki/', ''))
-            except:
-                if imagePage == None:
-                    imgIndex += 1
-        # Iterates through the list until it finds a viable page to search for an image.
+        response = requests.get("https://en.wikipedia.org" + posImagePages[0])
+        html = response.text
+        # Gets the HTML for the page
 
-        if len(imagePage.images) == 0 or imagePage == False:
-            return False
-        # If no images are found on the page
+        soup = BeautifulSoup(html, 'html.parser')
+        results = soup.find("a", class_="image")
+        # Finds all of the links with image class
 
-        unfilteredMedia = imagePage.images
-        # All media on the page.
+        allImagesOnPage = [img for img in results.select('img')]
+        # all of the images in the "a" tags
 
-        acceptedFormats = ['JPG', 'PNG', 'GIF', 'WEBP', 'jpg', 'png', 'gif', 'webp']
-        # Image formats accepted by twitter
+        requestedImage = allImagesOnPage[0]['src']
+         #gets the src of each image
 
-        posImages = []
-        for i in range(len(unfilteredMedia)):
-            if unfilteredMedia[i][len(unfilteredMedia[i]) - 3:len(unfilteredMedia[i])] in acceptedFormats:
-                posImages.append(unfilteredMedia[i])
-        # Filters out invalid file extensions
+        requestedImage = "https:" + requestedImage.replace(requestedImage[requestedImage.find("px")-3:requestedImage.find("px")], "1000")
+        # remakes the links so the image is 1000px high
 
-        if len(posImages) == 0:
-            return False
-        # If all images were invalid
-
-        requestedImage = posImages[random.randrange(0, len(posImages))]
         image = requests.get(requestedImage)
         fileExtension = requestedImage[len(requestedImage) - 4:len(requestedImage)]
         # Grabs a random image file link and the file extension.
 
-        self.imageName = "img" + fileExtension
+        self.imageName = "tweetImage" + fileExtension
         # The file name
         imageLoc = self.saveFolder + '/' + self.imageName
         # Path to file
@@ -113,8 +100,8 @@ class ImageDownload:
 #     currDay = currDate.day
 #
 #     t = ImageDownload(month, currDay)
-#     x = t.download(30)
-#     t.deleteImage(x)
+#     x = t.download(random.randrange(0, 40))
+#     # t.deleteImage(x)
 #     # l = []
 #     # for i in range(40):
 #     #     print("TIMES: " + str(i))

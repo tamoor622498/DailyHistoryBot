@@ -48,15 +48,17 @@ class Events:
             try:
                 if imgPath:
                     try:
-                        api.update_with_media(imgPath, output)
-                        # print(output)
-                        # Image found
+                        media_list = []
+                        response = api.media_upload(imgPath)
+                        media_list.append(response.media_id_string)
+                        api.update_status(output, media_ids=media_list)
+                        print("Image was tweeted.")
+                        # This just tweets the image
                     except:
+                        print("Image not tweeted.")
                         api.update_status(output)
-                        # print(output)
                 else:
                     api.update_status(output)
-                    # print(output)
                     # No image path
                 downloader.deleteImage(imgPath)
                 # Downloaded image is deleted
