@@ -68,9 +68,10 @@ class ImageDownload:
         # all of the images in the "a" tags
 
         requestedImage = allImagesOnPage[0]['src']
-         #gets the src of each image
+        # gets the src of each image
 
-        requestedImage = "https:" + requestedImage.replace(requestedImage[requestedImage.find("px")-3:requestedImage.find("px")], "1000")
+        requestedImage = "https:" + requestedImage.replace(
+            requestedImage[requestedImage.find("px") - 3:requestedImage.find("px")], "1000")
         # remakes the links so the image is 1000px high
 
         image = requests.get(requestedImage)
@@ -92,7 +93,6 @@ class ImageDownload:
             print("DELETING: " + imageLoc)
             os.remove(imageLoc)
         # Deletes the image through exact file path.
-
 
 # def main():
 #     currDate = datetime.now()

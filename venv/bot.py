@@ -35,15 +35,23 @@ class Events:
         while (True):
             now = datetime.now().time()
             # Current time
+
             loc = random.randrange(0, len(self.currDayEvents))
+            while not self.currDayEvents[loc]:
+                loc = random.randrange(0, len(self.currDayEvents))
+            # So not the location isn't false
             # Random part in list
+
             output = self.monthAndDay + ", " + self.currDayEvents[loc] + " #TodayInHistory"
             # Adds date in front of event
+
             downloader = ImageDownload(self.month, self.currDay)
             imgPath = downloader.download(loc)
             # Path to downloaded image
-            self.currDayEvents.pop(loc)
-            # removed from list
+
+            self.currDayEvents[loc] = False
+            # Set as used.
+            # Not removed from list so not out of line with page
 
             try:
                 if imgPath:
@@ -54,24 +62,30 @@ class Events:
                         api.update_status(output, media_ids=media_list)
                         print("Image was tweeted.")
                         # This just tweets the image
+
                     except:
                         print("Image not tweeted.")
                         api.update_status(output)
+                        # If image errors out
                 else:
                     api.update_status(output)
                     # No image path
-                downloader.deleteImage(imgPath)
-                # Downloaded image is deleted
+
                 print(output, "tweeted at ", now)
                 time.sleep(3600 * 2)
+
             except tweepy.error.TweepError as e:
                 # gets error
+
                 if e.api_code == 187:
                     # 187 is repeated tweet error code
                     print("Repeated Tweet: ", output)
                 else:
                     print("Exception: ", e.reason)
                     # Any other reason
+
+            downloader.deleteImage(imgPath)
+            # Deletes downloaded image
 
             if len(self.currDayEvents) < 1:
                 while self.currDay == datetime.now().day:
