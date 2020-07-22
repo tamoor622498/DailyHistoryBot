@@ -84,8 +84,11 @@ class Events:
                     print("Exception: ", e.reason)
                     # Any other reason
 
-            downloader.deleteImage(imgPath)
-            # Deletes downloaded image
+            try:
+                downloader.deleteImage(imgPath)
+                # Deletes downloaded image
+            except:
+                pass
 
             if len(self.currDayEvents) < 1:
                 while self.currDay == datetime.now().day:
