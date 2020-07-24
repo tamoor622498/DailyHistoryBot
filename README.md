@@ -14,9 +14,9 @@ A python twitter bot that posts history facts from Wikipedia and scrapes images.
 ### Authentication.py:
 >import tweepy  
 >def authFunc():  
->    auth = tweepy.OAuthHandler("CONSUMER_KEY","CONSUMER_SECRET")
->    auth.set_access_token("ACCESS_TOKEN", "ACCESS_TOKEN_SECRET")
->    return tweepy.API(auth)
+>    auth = tweepy.OAuthHandler("CONSUMER_KEY","CONSUMER_SECRET")  
+>    auth.set_access_token("ACCESS_TOKEN", "ACCESS_TOKEN_SECRET")  
+>    return tweepy.API(auth)  
 
 The file or function should look like this. I have not included then in the repo for the security of my twitter account.  
 You can get the keys and tokens by signing up for a twitter developer account. For detailed tutorial, look at this [guide](https://pypi.org/project/beautifulsoup4/).
