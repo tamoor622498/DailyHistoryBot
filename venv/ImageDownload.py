@@ -64,8 +64,11 @@ class ImageDownload:
         results = soup.find("a", class_="image")
         # Finds all of the links with image class
 
-        allImagesOnPage = [img for img in results.select('img')]
-        # all of the images in the "a" tags
+        try:
+            allImagesOnPage = [img for img in results.select('img')]
+            # all of the images in the "a" tags
+        except:
+            return False;
 
         requestedImage = allImagesOnPage[0]['src']
         # gets the src of each image
@@ -94,14 +97,17 @@ class ImageDownload:
             os.remove(imageLoc)
         # Deletes the image through exact file path.
 
-# def main():
-#     currDate = datetime.now()
-#     month = currDate.strftime("%B")
-#     currDay = currDate.day
-#
-#     t = ImageDownload(month, currDay)
-#     x = t.download(random.randrange(0, 40))
-#     # t.deleteImage(x)
+
+def main():
+    currDate = datetime.now()
+    month = currDate.strftime("%B")
+    currDay = currDate.day
+
+    t = ImageDownload(month, currDay)
+    x = t.download(2)
+    # t.deleteImage(x)
+
+
 #     # l = []
 #     # for i in range(40):
 #     #     print("TIMES: " + str(i))
@@ -114,5 +120,5 @@ class ImageDownload:
 #     #         t.deleteImage(l[k])
 #
 #
-# if __name__ == '__main__':
-#     main()
+if __name__ == '__main__':
+    main()
