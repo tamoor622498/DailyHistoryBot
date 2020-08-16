@@ -28,6 +28,7 @@ class Events:
 
     def getEvents(self):
         self.currDayEvents = wikipedia.page(self.monthAndDay).section("Events").splitlines()
+        self.downloader = ImageDownload(wikipedia.page(self.monthAndDay).html())
         # This gets the Wikipedia page, then gets the "Events" section (returns block of text)
         # and uses .splitlines() to turn currDayEvents into a list.
 
@@ -45,8 +46,8 @@ class Events:
             output = self.monthAndDay + ", " + self.currDayEvents[loc] + " #TodayInHistory"
             # Adds date in front of event
 
-            downloader = ImageDownload(self.month, self.currDay)
-            imgPath = downloader.download(loc)
+
+            imgPath = self.downloader.download(loc)
             # Path to downloaded image
 
             self.currDayEvents[loc] = False
@@ -56,6 +57,7 @@ class Events:
             try:
                 if imgPath:
                     try:
+                        # print(output)
                         media_list = []
                         response = api.media_upload(imgPath)
                         media_list.append(response.media_id_string)
@@ -64,15 +66,18 @@ class Events:
                         # This just tweets the image
 
                     except:
-                        print("Image not tweeted.")
+                        # print(output)
+                        #print("Image not tweeted.")
                         api.update_status(output)
                         # If image errors out
                 else:
+                    # print(output)
                     api.update_status(output)
                     # No image path
 
                 print(output, "tweeted at ", now)
-                time.sleep(3600 * 2)
+                # time.sleep(3600 * 2)
+                time.sleep(300)
 
             except tweepy.error.TweepError as e:
                 # gets error
@@ -85,7 +90,7 @@ class Events:
                     # Any other reason
 
             try:
-                downloader.deleteImage(imgPath)
+                self.downloader.deleteImage(imgPath)
                 # Deletes downloaded image
             except:
                 pass
