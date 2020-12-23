@@ -24,10 +24,12 @@ class Events:
         self.month = self.currDate.strftime("%B")
         self.currDay = self.currDate.day
         self.monthAndDay = self.month + " " + str(self.currDay)
+
         # Sets up necessary data for query
 
     def getEvents(self):
-        self.currDayEvents = wikipedia.page(self.monthAndDay).section("Events").splitlines()
+        self.currDayEvents = wikipedia.page(self.monthAndDay, auto_suggest=False).section("Events").splitlines()
+
         self.downloader = ImageDownload(wikipedia.page(self.monthAndDay).html())
         # This gets the Wikipedia page, then gets the "Events" section (returns block of text)
         # and uses .splitlines() to turn currDayEvents into a list.
@@ -58,10 +60,10 @@ class Events:
                 if imgPath:
                     try:
                         # print(output)
-                        media_list = []
-                        response = api.media_upload(imgPath)
-                        media_list.append(response.media_id_string)
-                        api.update_status(output, media_ids=media_list)
+                        # media_list = []
+                        # response = api.media_upload(imgPath)
+                        # media_list.append(response.media_id_string)
+                        # api.update_status(output, media_ids=media_list)
                         print("Image was tweeted.")
                         # This just tweets the image
 
