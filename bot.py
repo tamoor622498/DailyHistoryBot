@@ -78,8 +78,7 @@ class Events:
                     # No image path
 
                 print(output, "tweeted at ", now)
-                # time.sleep(3600 * 2)
-                time.sleep(300)
+                time.sleep(3600 * 2)
 
             except tweepy.error.TweepError as e:
                 # gets error
