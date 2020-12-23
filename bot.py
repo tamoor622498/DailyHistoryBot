@@ -30,7 +30,7 @@ class Events:
     def getEvents(self):
         self.currDayEvents = wikipedia.page(self.monthAndDay, auto_suggest=False).section("Events").splitlines()
 
-        self.downloader = ImageDownload(wikipedia.page(self.monthAndDay).html())
+        self.downloader = ImageDownload(wikipedia.page(self.monthAndDay, auto_suggest=False).html())
         # This gets the Wikipedia page, then gets the "Events" section (returns block of text)
         # and uses .splitlines() to turn currDayEvents into a list.
 
