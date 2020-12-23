@@ -60,10 +60,10 @@ class Events:
                 if imgPath:
                     try:
                         # print(output)
-                        # media_list = []
-                        # response = api.media_upload(imgPath)
-                        # media_list.append(response.media_id_string)
-                        # api.update_status(output, media_ids=media_list)
+                        media_list = []
+                        response = api.media_upload(imgPath)
+                        media_list.append(response.media_id_string)
+                        api.update_status(output, media_ids=media_list)
                         print("Image was tweeted.")
                         # This just tweets the image
 
