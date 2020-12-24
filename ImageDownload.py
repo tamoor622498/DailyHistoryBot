@@ -44,10 +44,13 @@ class ImageDownload:
             return False
         # If there are no links in the event to search for images.
 
-        if re.match(r'[0-9]', imageTitles[0]) or "AD " in imageTitles[0]:
-            imageLinks.pop(0)
-            imageTitles.pop(0)
-        # Removes the page for the whole year
+        try:
+            if re.match(r'[0-9]', imageTitles[0]) or "AD " in imageTitles[0]:
+                imageLinks.pop(0)
+                imageTitles.pop(0)
+        except:
+            return False
+        # Removes the page for the whole year or catches error
 
         # posImagePages = wikipedia.search(imageLinks[0].replace('/wiki/', ''))
         posImagePages = imageLinks
