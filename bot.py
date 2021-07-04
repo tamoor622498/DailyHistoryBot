@@ -3,7 +3,6 @@ import os
 import re
 from datetime import datetime  # Used for getting current date
 import requests
-import wikipedia
 import time
 import tweepy  # Twitter API
 import random
@@ -47,140 +46,124 @@ class Events:
                     child.decompose()
 
     def eventsPrinter(self):
-        eventIndex = random.randrange(0, len(self.allEvents))
-        event = self.allEvents[eventIndex]
-        output = self.monthAndDay.replace("_", " ") + ", " + event.getText().replace("   ", " ") + " #TodayInHistory"
-        
-        print("OUTPUT IS: "+output)
+        while(True):
+            self.dayChange() #Running out of events or day changed
 
-        potentialLinks = event.findChildren('a')
-        if ((potentialLinks[0].getText().isnumeric()) or ("BC" in potentialLinks[0].getText()) or (("AD" in potentialLinks[0].getText()))):
-            potentialLinks.pop(0)
+            eventIndex = random.randrange(0, len(self.allEvents)) #Random index
+            event = self.allEvents[eventIndex]
+            output = self.monthAndDay.replace("_", " ") + ", " + event.getText().replace("   ", " ") + " #TodayInHistory" #Tweet formatted and formed
+            
+            print("OUTPUT IS: "+output)
 
-        gotImage = False
-        
-        for link in potentialLinks:
-            print("Getting image for: " + link.getText())
-            gotImage = self.downloadImage(link['href'].replace("/wiki/", ""))
-            if (gotImage):
-                break
+            potentialLinks = event.findChildren('a') #Links to pages mentioned
+            if ((potentialLinks[0].getText().isnumeric()) or ("BC" in potentialLinks[0].getText()) or (("AD" in potentialLinks[0].getText()))): #Removes the link for year
+                potentialLinks.pop(0)
 
-        wait = True
+            gotImage = False #If an image was found
+            
+            for link in potentialLinks: #Loop through links till an image is downloaded
+                print("Getting image for: " + link.getText())
+                gotImage = self.downloadImage(link['href'].replace("/wiki/", "")) #True if image was saved
+                if (gotImage):
+                    break
 
-        if (gotImage):
+            wait = True #Handle events that aren't able to be tweeted
+
+            if (gotImage): #If image downloaded
+                try:
+                    media_list = []
+                    response = api.media_upload(self.imageLoc) #Upload content
+                    media_list.append(response.media_id_string)
+                    api.update_status(output, media_ids=media_list) #Tweet with content
+                    print("Image was tweeted.")
+                    #tweets with image
+                except tweepy.error.TweepError as e:
+                    wait = False #Tweet failed, so don't wait to tweet next one
+                    if e.api_code == 182:
+                        print("Repeat Tweet: "+ output)
+                    elif e.api_code == 186:
+                        print("Tweet too long: "+ output)
+                    else:
+                        print("Not tweeted: "+ str(e.api_code)+"-"+e.reason)
+            else: #No image gotten
+                try:
+                    api.update_status(output) #tweet just text
+                    print("Image was not tweeted")
+                except tweepy.error.TweepError as e:
+                    wait = False #Tweet failed, so don't wait to tweet next one
+                    if e.api_code == 182:
+                        print("Repeat Tweet: "+ output)
+                    elif e.api_code == 186:
+                        print("Tweet too long: "+ output)
+                    else:
+                        print("Not tweeted: "+ str(e.api_code)+"-"+e.reason)
+
+            self.allEvents.pop(eventIndex) #Remove event from list
+
             try:
-                media_list = []
-                response = api.media_upload(self.imageLoc)
-                media_list.append(response.media_id_string)
-                api.update_status(output, media_ids=media_list)
-                print("Image was tweeted.")
-                #tweets with image
-            except tweepy.error.TweepError as e:
-                wait = False
-                if e.api_code == 182:
-                    print("Repeat Tweet: "+ output)
-                elif e.api_code == 186:
-                    print("Tweet too long: "+ output)
-                else:
-                    print("Not tweeted: "+ str(e.api_code)+"-"+e.reason)
+                self.deleteImage() #Image clean up
+                # Deletes downloaded image
+            except:
+                pass
 
-        else:
-            try:
-                api.update_status(output)
-                print("Image was not tweeted")
-            except tweepy.error.TweepError as e:
-                wait = False
-                if e.api_code == 182:
-                    print("Repeat Tweet: "+ output)
-                elif e.api_code == 186:
-                    print("Tweet too long: "+ output)
-                else:
-                    print("Not tweeted: "+ str(e.api_code)+"-"+e.reason)
-
-        self.allEvents.pop(eventIndex)
-
-        try:
-            self.deleteImage()
-            # Deletes downloaded image
-        except:
-            pass
-
-        if (wait):
-            print(output, " tweeted at ", datetime.now().time())
-            time.sleep(3600 * 2)
-
-        self.dayChange()
-
-        
-        
-
+            if (wait):
+                print(output, " tweeted at ", datetime.now().time())
+                time.sleep(3600 * 2) #Wait 2 hours for next tweet
 
     def downloadImage(self, page):
         if not os.path.exists(self.saveFolder): #Creates folder if it's not there
             os.mkdir(self.saveFolder)
 
-        wikiPage = requests.get("https://en.wikipedia.org/wiki/"+page)
-        imageSoup = BeautifulSoup(wikiPage.text, 'html.parser')
+        wikiPage = requests.get("https://en.wikipedia.org/wiki/"+page) #Get the page HTML
+        imageSoup = BeautifulSoup(wikiPage.text, 'html.parser') #Load into BeautifulSoup
         
-        img_tags = imageSoup.find_all('img')
+        img_tags = imageSoup.find_all('img') #Get's all images on the page
 
-        if (len(img_tags) < 1):
+        if (len(img_tags) < 1): #If no images
             return False
 
-
-        ignore = {"//upload.wikimedia.org/wikipedia/en/thumb/9/99/Question_book-new.svg/50px-Question_book-new.svg.png",
-                  "//upload.wikimedia.org/wikipedia/en/thumb/9/94/Symbol_support_vote.svg/19px-Symbol_support_vote.svg.png",
-                  "//upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Text_document_with_red_question_mark.svg/40px-Text_document_with_red_question_mark.svg.png",
-                  "//upload.wikimedia.org/wikipedia/en/thumb/b/b4/Ambox_important.svg/40px-Ambox_important.svg.png",
-                  "//upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Crystal_Clear_app_kedit.svg/40px-Crystal_Clear_app_kedit.svg.png",
-                  "//upload.wikimedia.org/wikipedia/en/thumb/1/1b/Semi-protection-shackle.svg/20px-Semi-protection-shackle.svg.png",
-                  "//upload.wikimedia.org/wikipedia/en/thumb/e/e7/Cscr-featured.svg/20px-Cscr-featured.svg.png",
-                  "//upload.wikimedia.org/wikipedia/commons/thumb/4/47/Sound-icon.svg/20px-Sound-icon.svg.png",
-                  "//upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Ambox_current_red_Asia_Australia.svg/42px-Ambox_current_red_Asia_Australia.svg.png",
-                  "/static/images/footer/wikimedia-button.png",
+        # Internal WIKI images
+        ignore = {"/static/images/footer/wikimedia-button.png",
                   "/static/images/footer/poweredby_mediawiki_88x31.png",
                   "//en.wikipedia.org/wiki/Special:CentralAutoLogin/start?type=1x1",
                   "//upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Red_pog.svg/8px-Red_pog.svg.png",
-                  "//upload.wikimedia.org/wikipedia/en/thumb/9/94/Symbol_support_vote.svg/19px-Symbol_support_vote.svg.png",
-                  "//upload.wikimedia.org/wikipedia/en/thumb/8/8a/OOjs_UI_icon_edit-ltr-progressive.svg/10px-OOjs_UI_icon_edit-ltr-progressive.svg.png",
-                  "//upload.wikimedia.org/wikipedia/en/thumb/4/4a/Commons-logo.svg/12px-Commons-logo.svg.png",
-                  "//upload.wikimedia.org/wikipedia/commons/thumb/4/48/Black_and_white_camera_icon.svg/25px-Black_and_white_camera_icon.svg.png",
-                  "//upload.wikimedia.org/wikipedia/en/thumb/a/a4/Flag_of_the_United_States.svg/30px-Flag_of_the_United_States.svg.png",
-                  "//upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Translation_to_english_arrow.svg/50px-Translation_to_english_arrow.svg.png",
                   "//upload.wikimedia.org/wikipedia/commons/7/74/Red_Pencil_Icon.png"}
 
-        imageLink = None
+        imageLink = None #Tells if image is found
         for img in img_tags:
-            if (img['src'] not in ignore and (int(re.findall(r"(\d+)px", img['src'])[0]) > 99)):
+            if (img['src'] not in ignore and (int(re.findall(r"(\d+)px", img['src'])[0]) > 99)): #If link not in ignore array and size greater that 99 pixels
                 imageLink = img['src']
                 break
 
-        if (imageLink == None):
+        if (imageLink == None): #No image found
             return False
         
         print(imageLink)
 
-        image = requests.get("https:"+imageLink)
-        fileExtension = imageLink[len(imageLink) - 4:len(imageLink)]
+        image = requests.get("https:"+imageLink) #Get the image page
+        fileExtension = imageLink[len(imageLink) - 4:len(imageLink)] #Image format from link
 
-        self.imageName = "tweetImage" + fileExtension
+        self.imageName = "tweetImage" + fileExtension 
 
-        self.imageLoc = self.saveFolder + '/' + self.imageName
+        self.imageLoc = self.saveFolder + '/' + self.imageName #Image location
 
-        with open(self.imageLoc, 'wb') as file:
+        with open(self.imageLoc, 'wb') as file: #Saving the image at location
             file.write(image.content)
         
         return True
 
     def deleteImage(self):
-        if self.imageLoc:
+        if os.path.exists(self.imageLoc): #Delete if exsits
             print("DELETING: " + self.imageLoc)
             os.remove(self.imageLoc)
 
     def dayChange(self):
-        if (len(self.allEvents) < 0):
+        if (len(self.allEvents) < 0): #If events run out
             while self.day == datetime.now().day:
                 time.sleep(60)
+        
+        if self.day != datetime.now().day: #If day changes
+                self.getEvents()
 
 
 def main():
