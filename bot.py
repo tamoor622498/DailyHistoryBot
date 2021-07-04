@@ -1,16 +1,17 @@
 from bs4 import BeautifulSoup
+import os
+import re
 from datetime import datetime  # Used for getting current date
 import requests
 import wikipedia
 import time
 import tweepy  # Twitter API
 import random
-from ImageDownload import ImageDownload  # Downloads images from twitter page.
 
-import authentication
+import realAuthentication
 # Holds twitter login data.
 
-api = authentication.authFunc()
+api = realAuthentication.authFunc()
 # Returns the API object
 
 class Events:
@@ -18,6 +19,9 @@ class Events:
         self.getEvents()
 
     def getEvents(self):
+        self.saveFolder = "MEDIA"
+        self.fileName = "tweetImage"
+
         self.currDate = datetime.now() #Current time and date
         self.month = self.currDate.strftime("%B") #Gets month in str
         self.day = self.currDate.day #day in int
@@ -43,86 +47,140 @@ class Events:
                     child.decompose()
 
     def eventsPrinter(self):
-        event = self.allEvents[2]
-        link = event.find_all('a', href=True)[2]['href'].replace("/wiki/","")
+        eventIndex = random.randrange(0, len(self.allEvents))
+        event = self.allEvents[eventIndex]
+        output = self.monthAndDay.replace("_", " ") + ", " + event.getText().replace("   ", " ") + " #TodayInHistory"
+        
+        print("OUTPUT IS: "+output)
 
-        print(wikipedia.WikipediaPage(link).images)
-        print(wikipedia.WikipediaPage(link))
-        # for link in event.find_all('a', href=True):
-        #     print(link['href'])
+        potentialLinks = event.findChildren('a')
+        if ((potentialLinks[0].getText().isnumeric()) or ("BC" in potentialLinks[0].getText()) or (("AD" in potentialLinks[0].getText()))):
+            potentialLinks.pop(0)
+
+        gotImage = False
+        
+        for link in potentialLinks:
+            print("Getting image for: " + link.getText())
+            gotImage = self.downloadImage(link['href'].replace("/wiki/", ""))
+            if (gotImage):
+                break
+
+        wait = True
+
+        if (gotImage):
+            try:
+                media_list = []
+                response = api.media_upload(self.imageLoc)
+                media_list.append(response.media_id_string)
+                api.update_status(output, media_ids=media_list)
+                print("Image was tweeted.")
+                #tweets with image
+            except tweepy.error.TweepError as e:
+                wait = False
+                if e.api_code == 182:
+                    print("Repeat Tweet: "+ output)
+                elif e.api_code == 186:
+                    print("Tweet too long: "+ output)
+                else:
+                    print("Not tweeted: "+ str(e.api_code)+"-"+e.reason)
+
+        else:
+            try:
+                api.update_status(output)
+                print("Image was not tweeted")
+            except tweepy.error.TweepError as e:
+                wait = False
+                if e.api_code == 182:
+                    print("Repeat Tweet: "+ output)
+                elif e.api_code == 186:
+                    print("Tweet too long: "+ output)
+                else:
+                    print("Not tweeted: "+ str(e.api_code)+"-"+e.reason)
+
+        self.allEvents.pop(eventIndex)
+
+        try:
+            self.deleteImage()
+            # Deletes downloaded image
+        except:
+            pass
+
+        if (wait):
+            print(output, " tweeted at ", datetime.now().time())
+            time.sleep(3600 * 2)
+
+        self.dayChange()
 
         
-
-        # while (True):
-        #     now = datetime.now().time()
-        #     # Current time
-
-        #     loc = random.randrange(0, len(self.currDayEvents))
-        #     while not self.currDayEvents[loc]:
-        #         loc = random.randrange(0, len(self.currDayEvents))
-        #     # So not the location isn't false
-        #     # Random part in list
-
-        #     output = self.monthAndDay + ", " + self.currDayEvents[loc] + " #TodayInHistory"
-        #     # Adds date in front of event
+        
 
 
-        #     imgPath = self.downloader.download(loc)
-        #     # Path to downloaded image
+    def downloadImage(self, page):
+        if not os.path.exists(self.saveFolder): #Creates folder if it's not there
+            os.mkdir(self.saveFolder)
 
-        #     self.currDayEvents[loc] = False
-        #     # Set as used.
-        #     # Not removed from list so not out of line with page
+        wikiPage = requests.get("https://en.wikipedia.org/wiki/"+page)
+        imageSoup = BeautifulSoup(wikiPage.text, 'html.parser')
+        
+        img_tags = imageSoup.find_all('img')
 
-        #     try:
-        #         if imgPath:
-        #             try:
-        #                 # print(output)
-        #                 media_list = []
-        #                 response = api.media_upload(imgPath)
-        #                 media_list.append(response.media_id_string)
-        #                 api.update_status(output, media_ids=media_list)
-        #                 print("Image was tweeted.")
-        #                 # This just tweets the image
+        if (len(img_tags) < 1):
+            return False
 
-        #             except:
-        #                 # print(output)
-        #                 #print("Image not tweeted.")
-        #                 api.update_status(output)
-        #                 # If image errors out
-        #         else:
-        #             # print(output)
-        #             api.update_status(output)
-        #             # No image path
 
-        #         print(output, "tweeted at ", now)
-        #         time.sleep(3600 * 2)
+        ignore = {"//upload.wikimedia.org/wikipedia/en/thumb/9/99/Question_book-new.svg/50px-Question_book-new.svg.png",
+                  "//upload.wikimedia.org/wikipedia/en/thumb/9/94/Symbol_support_vote.svg/19px-Symbol_support_vote.svg.png",
+                  "//upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Text_document_with_red_question_mark.svg/40px-Text_document_with_red_question_mark.svg.png",
+                  "//upload.wikimedia.org/wikipedia/en/thumb/b/b4/Ambox_important.svg/40px-Ambox_important.svg.png",
+                  "//upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Crystal_Clear_app_kedit.svg/40px-Crystal_Clear_app_kedit.svg.png",
+                  "//upload.wikimedia.org/wikipedia/en/thumb/1/1b/Semi-protection-shackle.svg/20px-Semi-protection-shackle.svg.png",
+                  "//upload.wikimedia.org/wikipedia/en/thumb/e/e7/Cscr-featured.svg/20px-Cscr-featured.svg.png",
+                  "//upload.wikimedia.org/wikipedia/commons/thumb/4/47/Sound-icon.svg/20px-Sound-icon.svg.png",
+                  "//upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Ambox_current_red_Asia_Australia.svg/42px-Ambox_current_red_Asia_Australia.svg.png",
+                  "/static/images/footer/wikimedia-button.png",
+                  "/static/images/footer/poweredby_mediawiki_88x31.png",
+                  "//en.wikipedia.org/wiki/Special:CentralAutoLogin/start?type=1x1",
+                  "//upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Red_pog.svg/8px-Red_pog.svg.png",
+                  "//upload.wikimedia.org/wikipedia/en/thumb/9/94/Symbol_support_vote.svg/19px-Symbol_support_vote.svg.png",
+                  "//upload.wikimedia.org/wikipedia/en/thumb/8/8a/OOjs_UI_icon_edit-ltr-progressive.svg/10px-OOjs_UI_icon_edit-ltr-progressive.svg.png",
+                  "//upload.wikimedia.org/wikipedia/en/thumb/4/4a/Commons-logo.svg/12px-Commons-logo.svg.png",
+                  "//upload.wikimedia.org/wikipedia/commons/thumb/4/48/Black_and_white_camera_icon.svg/25px-Black_and_white_camera_icon.svg.png",
+                  "//upload.wikimedia.org/wikipedia/en/thumb/a/a4/Flag_of_the_United_States.svg/30px-Flag_of_the_United_States.svg.png",
+                  "//upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Translation_to_english_arrow.svg/50px-Translation_to_english_arrow.svg.png",
+                  "//upload.wikimedia.org/wikipedia/commons/7/74/Red_Pencil_Icon.png"}
 
-        #     except tweepy.error.TweepError as e:
-        #         # gets error
+        imageLink = None
+        for img in img_tags:
+            if (img['src'] not in ignore and (int(re.findall(r"(\d+)px", img['src'])[0]) > 99)):
+                imageLink = img['src']
+                break
 
-        #         if e.api_code == 187:
-        #             # 187 is repeated tweet error code
-        #             print("Repeated Tweet: ", output)
-        #         else:
-        #             print("Exception: ", e.reason)
-        #             # Any other reason
+        if (imageLink == None):
+            return False
+        
+        print(imageLink)
 
-        #     try:
-        #         self.downloader.deleteImage(imgPath)
-        #         # Deletes downloaded image
-        #     except:
-        #         pass
+        image = requests.get("https:"+imageLink)
+        fileExtension = imageLink[len(imageLink) - 4:len(imageLink)]
 
-        #     if len(self.currDayEvents) < 1:
-        #         while self.currDay == datetime.now().day:
-        #             time.sleep(10)
-        #     # If the list of events is depleted, wait till next day.
+        self.imageName = "tweetImage" + fileExtension
 
-        #     if self.currDay != datetime.now().day:
-        #         self.updateDay()
-        #         self.getEvents()
-        #     # If day changes, reload
+        self.imageLoc = self.saveFolder + '/' + self.imageName
+
+        with open(self.imageLoc, 'wb') as file:
+            file.write(image.content)
+        
+        return True
+
+    def deleteImage(self):
+        if self.imageLoc:
+            print("DELETING: " + self.imageLoc)
+            os.remove(self.imageLoc)
+
+    def dayChange(self):
+        if (len(self.allEvents) < 0):
+            while self.day == datetime.now().day:
+                time.sleep(60)
 
 
 def main():
