@@ -122,6 +122,9 @@ class Events:
         if (len(img_tags) < 1): #If no images
             return False
 
+        for img in img_tags:
+            print(re.findall(r"(\d+)px", img['src']))
+
         # Internal WIKI images
         ignore = {"/static/images/footer/wikimedia-button.png",
                   "/static/images/footer/poweredby_mediawiki_88x31.png",
@@ -131,9 +134,12 @@ class Events:
 
         imageLink = None #Tells if image is found
         for img in img_tags:
-            if (img['src'] not in ignore and (int(re.findall(r"(\d+)px", img['src'])[0]) > 99)): #If link not in ignore array and size greater that 99 pixels
-                imageLink = img['src']
-                break
+            regArray = re.findall(r"(\d+)px", img['src'])
+            if (len(regArray) > 0):
+                if (img['src'] not in ignore and (int(regArray[0]) > 99)): #If link not in ignore array and size greater that 99 pixels
+                    imageLink = img['src']
+                    break
+            
 
         if (imageLink == None): #No image found
             return False
@@ -168,7 +174,10 @@ class Events:
 
 def main():
     eventsBot = Events()
-    eventsBot.eventsPrinter()
+    # eventsBot.eventsPrinter()
+
+    eventsBot.downloadImage("1947_Sylhet_referendum")
+
 
 
 if __name__ == '__main__':
