@@ -122,9 +122,6 @@ class Events:
         if (len(img_tags) < 1): #If no images
             return False
 
-        for img in img_tags:
-            print(re.findall(r"(\d+)px", img['src']))
-
         # Internal WIKI images
         ignore = {"/static/images/footer/wikimedia-button.png",
                   "/static/images/footer/poweredby_mediawiki_88x31.png",
@@ -174,9 +171,7 @@ class Events:
 
 def main():
     eventsBot = Events()
-    # eventsBot.eventsPrinter()
-
-    eventsBot.downloadImage("1947_Sylhet_referendum")
+    eventsBot.eventsPrinter()
 
 
 
